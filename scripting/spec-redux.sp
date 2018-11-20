@@ -16,6 +16,8 @@ public Plugin myinfo = {
 	url = "https://github.com/JoinedSenses"
 };
 
+// -------------- SM API
+
 public void OnPluginStart() {
 	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.", COMMAND_FILTER_NO_IMMUNITY);
 	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
@@ -36,6 +38,8 @@ public void OnClientDisconnect(int client) {
 		}
 	}
 }
+
+// -------------- Commands
 
 public Action cmdSpec(int client, int args) {
 	if (!client) {
@@ -139,6 +143,8 @@ public Action cmdForceSpec(int client, int args) {
 	return Plugin_Handled;
 }
 
+// -------------- Events
+
 public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	for (int i = 1; i <= GetMaxClients(); i++) {
@@ -148,6 +154,8 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 	return Plugin_Continue;
 }
+
+// -------------- Menus
 
 void menuSpec(int client, bool lock = false) {
 	Menu menu = new Menu(lock ? menuHandler_SpecLock : menuHandler_Spec, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem);
@@ -266,6 +274,8 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 	}
 	return 0;
 }
+
+// -------------- Stocks
 
 int isValidClient(int client) {
 	if (!IsClientInGame(client) || !IsPlayerAlive(client)) {
