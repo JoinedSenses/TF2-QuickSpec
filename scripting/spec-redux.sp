@@ -31,13 +31,13 @@ public void OnPluginStart() {
 }
 
 public void OnClientDisconnect(int client) {
+	g_iSpecTarget[client] = 0;
+	
 	for (int i = 1; i <= MaxClients; i++) {
 		if (g_iSpecTarget[i] == client) {
 			g_iSpecTarget[i] = 0;
-			break;
 		}
 	}
-	g_iSpecTarget[client] = 0;
 }
 
 // -------------- Commands
