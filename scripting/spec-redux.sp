@@ -149,7 +149,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	for (int i = 1; i <= GetMaxClients(); i++) {
 		if (g_iSpecTarget[i] == client) {
-			FakeClientCommand(i, "sm_spec #%i", GetClientUserId(client));
+			FakeClientCommand(i, "spec_player #%i", GetClientUserId(client));
 		}
 	}
 	return Plugin_Continue;
