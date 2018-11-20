@@ -37,6 +37,7 @@ public void OnClientDisconnect(int client) {
 			break;
 		}
 	}
+	g_iSpecTarget[client] = 0;
 }
 
 // -------------- Commands
