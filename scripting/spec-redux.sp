@@ -56,7 +56,7 @@ public Action cmdSpec(int client, int args) {
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
 	int target;
-	if (!(target = FindTarget(client, targetName, false, false))) {
+	if ((target = FindTarget(client, targetName, false, false)) < 1) {
 		return Plugin_Handled;
 	}
 
