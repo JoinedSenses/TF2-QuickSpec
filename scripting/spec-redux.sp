@@ -62,7 +62,6 @@ public Action cmdSpec(int client, int args) {
 
 	if (GetClientTeam(client) > 1) {
 		ChangeClientTeam(client, 1);
-		TF2_RespawnPlayer(client);
 	}
 
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
