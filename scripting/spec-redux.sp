@@ -95,7 +95,6 @@ public Action cmdSpecLock(int client, int args) {
 	}
 	if (GetClientTeam(client) > 1) {
 		ChangeClientTeam(client, 1);
-		TF2_RespawnPlayer(client);
 	}
 
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
@@ -135,7 +134,6 @@ public Action cmdForceSpec(int client, int args) {
 
 	if (GetClientTeam(target) > 1) {
 		ChangeClientTeam(target, 1);
-		TF2_RespawnPlayer(target);
 	}
 	FakeClientCommand(target, "spec_player #%i", GetClientUserId(targetToSpec));
 	FakeClientCommand(target, "spec_mode 1");
