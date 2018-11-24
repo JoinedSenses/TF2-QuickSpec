@@ -60,7 +60,7 @@ public Action cmdSpec(int client, int args) {
 		return Plugin_Handled;
 	}
 	bool isInSpec;
-	if (GetClientTeam(target) < 2) {
+	if (IsClientObserver(target)) {
 		target = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
 		if (target < 1) {
 			PrintToChat(client, "\x01[\x03Spec\x01] Target is in spec, but not spectating anyone.");
