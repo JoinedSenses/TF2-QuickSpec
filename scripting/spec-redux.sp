@@ -4,7 +4,7 @@
 #include <sourcemod>
 #include <tf2>
 
-#define PLUGIN_VERSION "2.0.1"
+#define PLUGIN_VERSION "2.0.2"
 
 int g_iSpecTarget[MAXPLAYERS+1];
 
@@ -107,7 +107,7 @@ public Action cmdSpecLock(int client, int args) {
 	}
 
 	int target;
-	if (!(target = FindTarget(client, targetName, false, false))) {
+	if ((target = FindTarget(client, targetName, false, false)) < 1) {
 		return Plugin_Handled;
 	}
 
@@ -244,9 +244,12 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			if (IsClientObserver(param1) && GetEntPropEnt(param1, Prop_Send, "m_hObserverTarget") == target) {
 				return ITEMDRAW_DISABLED;
 			}
+			return ITEMDRAW_DEFAULT;
 		}
-		case MenuAction_Cancel: {
-			delete menu;
+		case MenuAction_End: {
+			if (param2 != MenuEnd_Selected) {
+				delete menu;
+			}
 		}
 	}
 	return 0;
@@ -265,7 +268,7 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 				delete menu;
 				return 0;
 			}
-			if ((target = GetClientOfUserId(userid)) == 0) {
+			if ((target = GetClientOfUserId(userid)) < 0) {
 				PrintToChat(param1, "\x01[\x03Spec\x01] Player no longer in game");
 				menuSpec(param1);
 				delete menu;
@@ -290,8 +293,10 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 				return ITEMDRAW_DISABLED;
 			}
 		}
-		case MenuAction_Cancel: {
-			delete menu;
+		case MenuAction_End: {
+			if (param2 != MenuEnd_Selected) {
+				delete menu;
+			}
 		}
 	}
 	return 0;
