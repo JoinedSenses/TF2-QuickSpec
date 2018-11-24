@@ -4,7 +4,7 @@
 #include <sourcemod>
 #include <tf2>
 
-#define PLUGIN_VERSION "2.0.0"
+#define PLUGIN_VERSION "2.0.1"
 
 int g_iSpecTarget[MAXPLAYERS+1];
 
@@ -59,14 +59,31 @@ public Action cmdSpec(int client, int args) {
 	if ((target = FindTarget(client, targetName, false, false)) < 1) {
 		return Plugin_Handled;
 	}
+	bool isInSpec;
+	if (GetClientTeam(target) < 2) {
+		target = GetEntPropEnt(target, Prop_Send, "m_hObserverTarget");
+		if (target < 1) {
+			PrintToChat(client, "\x01[\x03Spec\x01] Target is in spec, but not spectating anyone.");
+			return Plugin_Handled;
+		}
+		if (target == client) {
+			PrintToChat(client, "\x01[\x03Spec\x01] Target is spectating you. Unable to spectate");
+			return Plugin_Handled;
+		}
+		PrintToChat(client, "\x01[\x03Spec\x01] Target is in spec. Now spectating their target", target);
+		isInSpec = true;
+	}
 
 	if (GetClientTeam(client) > 1) {
 		ChangeClientTeam(client, 1);
 	}
 
+	if (!isInSpec) {
+		PrintToChat(client, "\x01[\x03Spec\x01] Spectating \x03%N", target);
+	}
+
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
 	FakeClientCommand(client, "spec_mode 1");
-	PrintToChat(client, "\x01[\x03Spec\x01] Spectating \x03%N", target);
 	return Plugin_Handled;
 }
 
@@ -93,6 +110,12 @@ public Action cmdSpecLock(int client, int args) {
 	if (!(target = FindTarget(client, targetName, false, false))) {
 		return Plugin_Handled;
 	}
+
+	if (IsClientObserver(target)) {
+		PrintToChat(client, "\x01[\x03Spec\x01] Target is in spec, will resume with spec when they spawn.");
+		PrintToChat(client, "\x01[\x03Spec\x01] To disable, type /speclock 0");
+	}
+
 	if (GetClientTeam(client) > 1) {
 		ChangeClientTeam(client, 1);
 	}
@@ -123,6 +146,10 @@ public Action cmdForceSpec(int client, int args) {
 	if (args == 2) {
 		GetCmdArg(2, targetToSpecName, sizeof(targetToSpecName));
 		if ((targetToSpec = FindTarget(client, targetToSpecName, false, false)) < 1) {
+			return Plugin_Handled;
+		}
+		if (IsClientObserver(targetToSpec)) {
+			PrintToChat(client, "\x01[\x03Spec\x01] Target %N must be alive.", targetToSpec);
 			return Plugin_Handled;
 		}
 		Format(targetToSpecName, sizeof(targetToSpecName), "%N", targetToSpec);
