@@ -246,9 +246,7 @@ int menuHandler_Spec(Menu menu, MenuAction action, int param1, int param2) {
 			}
 		}
 		case MenuAction_Cancel: {
-			if (param2 == MenuCancel_Exit) {
-				delete menu;
-			}
+			delete menu;
 		}
 	}
 	return 0;
@@ -293,9 +291,7 @@ int menuHandler_SpecLock(Menu menu, MenuAction action, int param1, int param2) {
 			}
 		}
 		case MenuAction_Cancel: {
-			if (param2 == MenuCancel_Exit) {
-				delete menu;
-			}
+			delete menu;
 		}
 	}
 	return 0;
