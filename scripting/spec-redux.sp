@@ -5,7 +5,7 @@
 #include <tf2>
 #include <sdktools>
 
-#define PLUGIN_VERSION "2.0.2"
+#define PLUGIN_VERSION "2.0.3"
 
 #define SAVE_NONE 0
 #define SAVE_RED 1
