@@ -3,16 +3,24 @@
 
 #include <sourcemod>
 #include <tf2>
+#include <sdktools>
 
 #define PLUGIN_VERSION "2.0.2"
 
-int g_iSpecTarget[MAXPLAYERS+1];
+#define SAVE_NONE 0
+#define SAVE_RED 1
+#define SAVE_BLUE 2
 
-public Plugin myinfo = {
-	name = "[TF2] Quick Spectate (redux)",
-	author = "JoinedSenses",
-	description = "Easily target players for spectating.",
-	version = PLUGIN_VERSION,
+int g_iSpecTarget[MAXPLAYERS + 1];
+
+int saveState[MAXPLAYERS + 1];
+float savePos[MAXPLAYERS + 1][3];
+
+public Plugin myinfo =  {
+	name = "[TF2] Quick Spectate (redux)", 
+	author = "JoinedSenses", 
+	description = "Easily target players for spectating.", 
+	version = PLUGIN_VERSION, 
 	url = "https://github.com/JoinedSenses"
 };
 
@@ -22,16 +30,18 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.", COMMAND_FILTER_NO_IMMUNITY);
 	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
 	RegConsoleCmd("sm_speclock", cmdSpecLock, "sm_speclock <target> - Consistently spectate a player, even through their death");
-
+	
 	RegAdminCmd("sm_fspec", cmdForceSpec, ADMFLAG_GENERIC, "sm_fspec <target> <targetToSpec>.");
-
-	HookEvent("player_spawn", eventPlayerSpawn, EventHookMode_Pre);
-
+	RegAdminCmd("sm_fspec_stop", cmdForceSpecStop, ADMFLAG_GENERIC, "sm_fspec_stop <target>");
+	
+	HookEvent("player_spawn", eventPlayerSpawn, EventHookMode_Post);
+	
 	LoadTranslations("common.phrases.txt");
 }
 
 public void OnClientDisconnect(int client) {
 	g_iSpecTarget[client] = 0;
+	saveState[client] = SAVE_NONE;
 	
 	for (int i = 1; i <= MaxClients; i++) {
 		if (g_iSpecTarget[i] == client) {
@@ -47,12 +57,12 @@ public Action cmdSpec(int client, int args) {
 		ReplyToCommand(client, "Must be in-game to use this command");
 		return Plugin_Handled;
 	}
-
+	
 	if (args < 1) {
 		menuSpec(client);
 		return Plugin_Handled;
 	}
-
+	
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
 	int target;
@@ -73,15 +83,15 @@ public Action cmdSpec(int client, int args) {
 		PrintToChat(client, "\x01[\x03Spec\x01] Target is in spec. Now spectating their target", target);
 		isInSpec = true;
 	}
-
+	
 	if (GetClientTeam(client) > 1) {
 		ChangeClientTeam(client, 1);
 	}
-
+	
 	if (!isInSpec) {
 		PrintToChat(client, "\x01[\x03Spec\x01] Spectating \x03%N", target);
 	}
-
+	
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
 	FakeClientCommand(client, "spec_mode 1");
 	return Plugin_Handled;
@@ -96,34 +106,34 @@ public Action cmdSpecLock(int client, int args) {
 		menuSpec(client, true);
 		return Plugin_Handled;
 	}
-
+	
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
-
+	
 	if (StrEqual(targetName, "off", false) || StrEqual(targetName, "0", false)) {
 		g_iSpecTarget[client] = 0;
 		PrintToChat(client, "\x01[\x03Spec\x01] Spec lock disabled");
 		return Plugin_Handled;
 	}
-
+	
 	int target;
 	if ((target = FindTarget(client, targetName, false, false)) < 1) {
 		return Plugin_Handled;
 	}
-
+	
 	if (IsClientObserver(target)) {
 		PrintToChat(client, "\x01[\x03Spec\x01] Target is in spec, will resume with spec when they spawn.");
 		PrintToChat(client, "\x01[\x03Spec\x01] To disable, type /speclock 0");
 	}
-
+	
 	if (GetClientTeam(client) > 1) {
 		ChangeClientTeam(client, 1);
 	}
-
+	
 	FakeClientCommand(client, "spec_player #%i", GetClientUserId(target));
 	FakeClientCommand(client, "spec_mode 1");
 	PrintToChat(client, "\x01[\x03Spec\x01] Spectating \x03%N", target);
-
+	
 	g_iSpecTarget[client] = target;
 	return Plugin_Handled;
 }
@@ -135,12 +145,12 @@ public Action cmdForceSpec(int client, int args) {
 	}
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
-
+	
 	int target;
 	if ((target = FindTarget(client, targetName, false, false)) < 1) {
 		return Plugin_Handled;
 	}
-
+	
 	char targetToSpecName[MAX_NAME_LENGTH];
 	int targetToSpec;
 	if (args == 2) {
@@ -158,13 +168,46 @@ public Action cmdForceSpec(int client, int args) {
 		Format(targetToSpecName, sizeof(targetToSpecName), "you");
 		targetToSpec = client;
 	}
-
-	if (GetClientTeam(target) > 1) {
+	
+	if (GetClientTeam(target) == 2) {
+		GetEntPropVector(target, Prop_Send, "m_vecOrigin", savePos[target]);
+		saveState[target] = SAVE_RED;
+		ChangeClientTeam(target, 1);
+	} else if (GetClientTeam(target) == 3) {
+		GetEntPropVector(target, Prop_Send, "m_vecOrigin", savePos[target]);
+		saveState[target] = SAVE_BLUE;
 		ChangeClientTeam(target, 1);
 	}
 	FakeClientCommand(target, "spec_player #%i", GetClientUserId(targetToSpec));
 	FakeClientCommand(target, "spec_mode 1");
 	PrintToChat(client, "\x01[\x03Spec\x01] Forced \x03%N\x01 to spectate \x03%s", target, targetToSpecName);
+	return Plugin_Handled;
+}
+
+public Action cmdForceSpecStop(int client, int args) {
+	if (args < 1) {
+		PrintToChat(client, "sm_fspec_stop <target>");
+		return Plugin_Handled;
+	}
+	
+	char targetName[MAX_NAME_LENGTH];
+	GetCmdArg(1, targetName, sizeof(targetName));
+	
+	int target;
+	if ((target = FindTarget(client, targetName, false, false)) < 1) {
+		return Plugin_Handled;
+	}
+	
+	if (saveState[target] == SAVE_RED) {
+		ChangeClientTeam(target, 2);
+		ReplyToCommand(client, "[Spec] Returned client to red team.");
+	} else if (saveState[target] == SAVE_BLUE) {
+		ChangeClientTeam(target, 3);
+		ReplyToCommand(client, "[Spec] Returned client to blue team.");
+	} else {
+		ReplyToCommand(client, "[Spec] Client was not forced to spectate.");
+	}
+	
 	return Plugin_Handled;
 }
 
@@ -178,15 +221,29 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 			FakeClientCommand(i, "spec_mode 1");
 		}
 	}
+	
+	if (saveState[client] == SAVE_RED && GetClientTeam(client) != 2) {
+		ChangeClientTeam(client, 2);
+		return Plugin_Continue;
+	} else if (saveState[client] == SAVE_BLUE && GetClientTeam(client) != 3) {
+		ChangeClientTeam(client, 3);
+		return Plugin_Continue;
+	}
+	
+	if (saveState[client] != SAVE_NONE) {
+		TeleportEntity(client, savePos[client], NULL_VECTOR, NULL_VECTOR);
+		saveState[client] = SAVE_NONE;
+	}
+	
 	return Plugin_Continue;
 }
 
 // -------------- Menus
 
 void menuSpec(int client, bool lock = false) {
-	Menu menu = new Menu(lock ? menuHandler_SpecLock : menuHandler_Spec, MENU_ACTIONS_DEFAULT|MenuAction_DrawItem);
+	Menu menu = new Menu(lock ? menuHandler_SpecLock : menuHandler_Spec, MENU_ACTIONS_DEFAULT | MenuAction_DrawItem);
 	menu.SetTitle("Spectate Menu");
-
+	
 	if (GetClientTeam(client) > 1 && !lock) {
 		menu.AddItem("", "QUICK SPEC");
 	}
@@ -309,4 +366,4 @@ int isValidClient(int client) {
 		return 0;
 	}
 	return GetClientUserId(client);
-}
+} 
