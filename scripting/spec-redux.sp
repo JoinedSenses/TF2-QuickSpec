@@ -231,8 +231,7 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 	}
 	
 	if (saveState[client] != SAVE_NONE) {
-		TeleportEntity(client, savePos[client], NULL_VECTOR, NULL_VECTOR);
-		saveState[client] = SAVE_NONE;
+		CreateTimer(1.5, Timer_tpToSave, client);
 	}
 	
 	return Plugin_Continue;
@@ -366,4 +365,11 @@ int isValidClient(int client) {
 		return 0;
 	}
 	return GetClientUserId(client);
+}
+
+// -------------- Timers
+
+public Action Timer_tpToSave(Handle timer, int client) {
+	TeleportEntity(client, savePos[client], NULL_VECTOR, NULL_VECTOR);
+	saveState[client] = SAVE_NONE;
 } 
