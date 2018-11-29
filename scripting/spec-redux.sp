@@ -18,7 +18,7 @@ bool
 	  g_bRestoring[MAXPLAYERS+1];
 int
 	  g_iSpecTarget[MAXPLAYERS+1]
-	, g_iSaveTeam[MAXPLAYERS+1] = { SAVE_NONE, ...};
+	, g_iSaveTeam[MAXPLAYERS+1] = { SAVE_NONE, ... };
 float
 	  g_fSaveOrigin[MAXPLAYERS+1][3]
 	, g_fSaveAngles[MAXPLAYERS+1][3];
@@ -53,6 +53,8 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_fspecstop", cmdForceSpecStop, ADMFLAG_GENERIC, "sm_fspecstop <target>");
 
 	AddCommandListener(listenerJoinTeam, "jointeam");
+	AddCommandListener(listenerJoinClass, "joinclass");
+	AddCommandListener(listenerJoinClass, "join_class");
 
 	HookEvent("player_spawn", eventPlayerSpawn);
 
@@ -288,6 +290,14 @@ public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcas
 		CreateTimer(cvarRestoreTimer.FloatValue, timerRestore, GetClientUserId(client));
 	}
 
+	return Plugin_Continue;
+}
+
+public Action listenerJoinClass(int client, const char[] command, int args) {
+	if (g_iSaveTeam[client] != SAVE_NONE || g_bRestoring[client]) {
+		PrintToChat(client, "\x01[\x03Spec\x01] Can't change class while restoring location");
+		return Plugin_Handled;
+	}
 	return Plugin_Continue;
 }
 
