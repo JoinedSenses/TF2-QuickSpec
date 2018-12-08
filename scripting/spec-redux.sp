@@ -5,7 +5,7 @@
 #include <tf2_stocks>
 #include <sdktools>
 
-#define PLUGIN_VERSION "2.1.0"
+#define PLUGIN_VERSION "2.1.1"
 #define PLUGIN_DESCRIPTION "Easily target players for spectating."
 
 enum {
