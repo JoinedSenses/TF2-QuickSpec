@@ -45,7 +45,7 @@ public void OnPluginStart() {
 	cvarAllowForceBot = CreateConVar("sm_spec_allowforcebot", "0", "Enable the use of force spec commands on bots?", FCVAR_NONE);
 	cvarVersion.SetString(PLUGIN_VERSION);
 
-	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.", COMMAND_FILTER_NO_IMMUNITY);
+	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.");
 	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
 	RegConsoleCmd("sm_speclock", cmdSpecLock, "sm_speclock <target> - Consistently spectate a player, even through their death");
 
