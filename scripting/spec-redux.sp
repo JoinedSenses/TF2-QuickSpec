@@ -5,7 +5,7 @@
 #include <tf2_stocks>
 #include <sdktools>
 
-#define PLUGIN_VERSION "2.1.1"
+#define PLUGIN_VERSION "2.1.2"
 #define PLUGIN_DESCRIPTION "Easily target players for spectating."
 
 enum {
@@ -23,8 +23,7 @@ float
 	  g_fSaveOrigin[MAXPLAYERS+1][3]
 	, g_fSaveAngles[MAXPLAYERS+1][3];
 ConVar
-	  cvarVersion
-	, cvarRestoreEnabled
+	  cvarRestoreEnabled
 	, cvarRestoreTimer
 	, cvarAllowForceBot;
 
@@ -39,12 +38,11 @@ public Plugin myinfo =  {
 // -------------- SM API
 
 public void OnPluginStart() {
-	cvarVersion = CreateConVar("sm_spec_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	CreateConVar("sm_spec_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
 	cvarRestoreEnabled = CreateConVar("sm_spec_restoreenabled", "0", "Enable location restoration pre-forcespec?", FCVAR_NONE, true, 0.0, true, 1.0);
 	cvarRestoreTimer = CreateConVar("sm_spec_restoretimer", "5.0", "Time until restoration after respawning", FCVAR_NONE, true, 0.0);
 	cvarAllowForceBot = CreateConVar("sm_spec_allowforcebot", "0", "Enable the use of force spec commands on bots?", FCVAR_NONE);
-	cvarVersion.SetString(PLUGIN_VERSION);
-
+	
 	RegConsoleCmd("sm_spec", cmdSpec, "sm_spec <target> - Spectate a player.");
 	RegConsoleCmd("sm_spec_ex", cmdSpecLock, "sm_spec_ex <target> - Consistently spectate a player, even through their death");
 	RegConsoleCmd("sm_speclock", cmdSpecLock, "sm_speclock <target> - Consistently spectate a player, even through their death");
@@ -184,8 +182,8 @@ public Action cmdForceSpec(int client, int args) {
 	char targetName[MAX_NAME_LENGTH];
 	GetCmdArg(1, targetName, sizeof(targetName));
 
-	int target;
-	if ((target = FindTarget(client, targetName, !cvarAllowForceBot.BoolValue, false)) < 1) {
+	int target = FindTarget(client, targetName, !cvarAllowForceBot.BoolValue);
+	if (target < 1) {
 		return Plugin_Handled;
 	}
 
@@ -268,7 +266,7 @@ public Action cmdForceSpecStop(int client, int args) {
 
 public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	for (int i = 1; i <= GetMaxClients(); i++) {
+	for (int i = 1; i <= MaxClients; i++) {
 		if (g_iSpecTarget[i] == client) {
 			FakeClientCommand(i, "spec_player #%i", GetClientUserId(client));
 			FakeClientCommand(i, "spec_mode 1");
